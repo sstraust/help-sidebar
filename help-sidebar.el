@@ -10,11 +10,12 @@
 	   "\n"))
 
 (defface help-bar-sidebar-keycommand-face
-  '((t (:background "#f0f0f0")))
+  '((t :foreground "SeaGreen3"
+       :inherit default))
   "Face for help bar keysequnces")
 
 (defface help-bar-sidebar-command-face
-  '((t (:background "#00ffaa")))
+  '((t :inherit default :foreground "light goldenrod" :height 1.5))
   "Face for help bar commands that are the actual results")
 
 (defun help-bar-sidebar-toggle ()
@@ -22,42 +23,33 @@
   (interactive)
   (let ((buffer (get-buffer-create "*test*"))
 	(content (help-bar-text-content)))
-    ;; Check if the sidebar window is already open
     (if-let ((window (get-buffer-window buffer)))
-        ;; If the window exists, close it
         (delete-window window)
-      ;; Otherwise, display the sidebar using the standard display-buffer-in-side-window
       (display-buffer-in-side-window
        buffer '((side . left)
                 (slot . 0)
                 (window-width . 30)
                 (window-parameters . ((no-other-window . t)
                                       (no-delete-other-windows . t)))))
-      ;; Populate the sidebar buffer content (optional)
       (with-current-buffer buffer
         (erase-buffer)
 	(mapc
 	 (lambda (command)
+	   (font-lock-add-keywords nil
+				   `((,(car command) . 'help-bar-sidebar-keycommand-face))
+				   'append)
+	   (font-lock-add-keywords nil
+				   `((,(cadr command) . 'help-bar-sidebar-command-face))
+				   'append)
 	   (insert (car command))
 	   (insert "\n")
-	   (font-lock-add-keywords nil
-				   `((,(car command) . font-lock-keyword-face)))
 	   (insert (cadr command))
 	   (insert "\n"))
-	 help-bar-commands-to-learn)))))
+	 help-bar-commands-to-learn)
+	(font-lock-fontify-buffer)))))
 
-;; certain fonts only have a meaning in certain modes
-;; so now you need to make sure that the faces are enabled
-;; for whatever mode the help buffer is in?
-;; do you _want_ to right a major mode for the help buffer?
-;; I'm not sure
- ;; Return t to signal a match
+
 (global-set-key (kbd "C-h C-l") 'help-bar-sidebar-toggle)
 
 
-
-(font-lock-add-keywords 'lisp-interaction-mode
-			'(("foo" . font-lock-keyword-face)))
-
-
-
+(provide 'help-sidebar)
